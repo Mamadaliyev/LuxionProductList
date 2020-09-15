@@ -83,3 +83,11 @@ def getsubcategorylist(request):
             })
 
     return JsonResponse(arrr, safe=False)
+
+
+@csrf_exempt
+def deleteproduct(request):
+    data = json.loads(request.body.decode('utf-8'))
+    prd = products.objects.get(pk=data['id'])
+    prd.delete()
+    return JsonResponse({"msg": 'deleted'}, safe=False)

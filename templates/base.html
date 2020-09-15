@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Title of the document</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+    <div class="table">
+        <el-row class="add-header">
+            <el-col :span="2">
+                <el-button @click="handleClickAdd" type="primary" icon="el-icon-plus"
+                >Добавить
+                </el-button
+                >
+            </el-col>
+        </el-row>
+        <el-row>
+            <el-col :span="24">
+                <el-table resizable="false" border :data="tableData">
+                    <el-table-column width="59" label="№" type="index"></el-table-column>
+                    <el-table-column
+                            width="180"
+                            label="Категория"
+                            prop="catTitle"
+                    ></el-table-column>
+                    <el-table-column
+                            width="180"
+                            label="Подкатегория"
+                            prop="subCatTitle"
+                    ></el-table-column>
+                    <el-table-column width="180" label="Название" prop="name">
+                    </el-table-column>
+                    <el-table-column width="180" label="Тип" prop="type">
+                    </el-table-column>
+                    <el-table-column width="120" label="Цена покупки" prop="buyPrice">
+                    </el-table-column>
+                    <el-table-column width="120" label="Цена продажи" prop="sellPrice">
+                    </el-table-column>
+                    <el-table-column width="150" align="right">
+                        <template slot-scope="scope">
+                            <el-button
+                                    type="warning"
+                                    @click="handleEdit(scope.row.id)"
+                                    icon="el-icon-edit"
+                            ></el-button>
+                            <el-button
+                                    type="danger"
+                                    @click="handleDelete(scope.row.id)"
+                                    icon="el-icon-delete"
+                            ></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-col>
+        </el-row>
+
+        <el-dialog @open="handleDialogOpen" :visible.sync="dialogVisible">
+            <div class="edit-form">
+                <el-form size="mini" label-width="120px" :model="formData" action="/addItem" method="POST">
+
+                    {% csrf_token %}
+                    <el-form-item label="Категория">
+                        <el-select
+                                @change="handleCategoryChange()"
+                                class="select-type"
+                                v-model="formData.categoryId"
+                                placeholder=""
+                        >
+                            <el-option
+                                    v-for="cat in categoryList"
+                                    :key="cat.id"
+                                    :label="cat.name"
+                                    :value="cat.id"
+                            >
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="Подкатегория">
+                        <el-select v-model="formData.subCategoryId" placeholder="">
+                            <el-option
+                                    v-for="subCat in subCategoryList"
+                                    :key="subCat.id"
+                                    :label="subCat.name"
+                                    :value="subCat.id"
+                            ></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="Название">
+                        <el-input required v-model="formData.name"></el-input>
+                    </el-form-item>
+                    <el-form-item label="Тип">
+                        <el-input required v-model="formData.type"></el-input>
+                    </el-form-item>
+                    <el-form-item label="Цена покупки">
+                        <el-input
+                                required
+                                type="number"
+                                v-model="formData.buyPrice"
+                        ></el-input>
+                    </el-form-item>
+                    <el-form-item label="Цена продажи">
+                        <el-input
+                                required
+                                type="number"
+                                v-model="formData.sellPrice"
+                        ></el-input>
+                    </el-form-item>
+                </el-form>
+                <div class="el-form-buttons">
+                    <el-button @click="handleDialogCancel">Отмена</el-button>
+                    <el-button v-if="editMode" @click="handleDialogUpdate" type="primary">
+                        Обновить
+                    </el-button>
+                    <el-button v-else @click="handleDialogAdd" type="primary">
+                        Добавить
+                    </el-button>
+                </div>
+            </div>
+        </el-dialog>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    let app = new Vue({
+        delimiters: ["[[", "]]"],
+        el: '#app',
+        data: {
+            dialogVisible: false,
+            editMode: false,
+            categoryList: [],
+            subCategoryList: [],
+            formData: {
+                categoryId: '',
+                subCategoryId: '',
+                name: "",
+                type: "",
+                buyPrice: "",
+                sellPrice: "",
+            },
+            tableData: [],
+        },
+        created() {
+            axios.get('/getlist')
+                .then(response => {
+                    // handle success
+                    this.tableData = response.data;
+                    console.log(this.tableData);
+                })
+                .catch(function (error) {
+                    // handle error
+                    console.log(error);
+                })
+                .then(function () {
+                    // always executed
+                });
+        },
+        methods: {
+            handleDialogOpen() {
+                axios.get('/getcategorylist').then(response => {
+                    console.log(response);
+                    this.categoryList = response.data
+                }).catch(err => {
+                    console.log(err)
+                })
+            },
+            handleCategoryChange() {
+                axios.post('getsubcategorylist/', {
+                    "id": this.formData.categoryId
+                }, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(response => {
+                        this.subCategoryList = response.data;
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    }).finally(() => {
+                })
+            },
+            handleEdit(id) {
+                this.editMode = true;
+                this.dialogVisible = true;
+                console.log("edit", id);
+            },
+            handleDelete(id) {
+                console.log("delete", id);
+            },
+            handleDialogCancel() {
+                this.dialogVisible = false;
+            },
+            handleDialogUpdate() {
+                this.dialogVisible = false;
+            },
+            handleDialogAdd() {
+                axios.post('addproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(function (response) {
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+                this.dialogVisible = false;
+            },
+            handleClickAdd() {
+                this.clearDialog();
+                this.editMode = false;
+                this.dialogVisible = true;
+            },
+            clearDialog() {
+                this.formData = {
+                    categoryId: '',
+                    subCategoryId: '',
+                    name: "",
+                    type: "",
+                    buyPrice: "",
+                    sellPrice: "",
+                }
+            },
+            getCookie(c_name) {
+                if (document.cookie.length > 0) {
+                    c_start = document.cookie.indexOf(c_name + "=");
+                    if (c_start != -1) {
+                        c_start = c_start + c_name.length + 1;
+                        c_end = document.cookie.indexOf(";", c_start);
+                        if (c_end == -1) c_end = document.cookie.length;
+                        return unescape(document.cookie.substring(c_start, c_end));
+                    }
+                }
+                return "";
+            }
+        },
+    })
+</script>
+
+</body>
+<style>
+    #app {
+        font-family: Avenir, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #2c3e50;
+        margin: 20px 100px;
+        height: 100%;
+    }
+
+    .table {
+        margin-top: 50px;
+    }
+
+    .table .add-header {
+        margin-bottom: 20px;
+    }
+
+    .edit-form .el-form-buttons {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        margin-top: 50px;
+    }
+</style>
+</html>

@@ -180,6 +180,9 @@
                 }, {"X-CSRFToken": this.getCookie("csrftoken")})
                     .then(response => {
                         this.subCategoryList = response.data;
+                        if (this.subCategoryList && !this.editMode) {
+                            this.formData.subCategoryId = ''
+                        }
                         console.log(response);
                     })
                     .catch(function (error) {
@@ -220,7 +223,6 @@
                 this.dialogVisible = false;
             },
             handleDialogUpdate() {
-
                 axios.post('updateproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
                     .then(function (response) {
                         console.log(response);

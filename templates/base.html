@@ -197,7 +197,7 @@
                     .then(response => {
                         this.formData = response.data;
                         console.log(response.data);
-                        this.handleDialogOpen()
+                        this.handleDialogOpen();
                         this.handleCategoryChange()
                     })
                     .catch(err => {

@@ -9,5 +9,8 @@ urlpatterns = [
     path('addproduct/', views.addproduct, name='add_item'),
     path('getlist/', views.getlist, name='getlist'),
     path('getcategorylist/', views.getcategorylist, name='getcategorylist'),
-    path('getsubcategorylist/', views.getsubcategorylist, name='getsubcategorylist')
+    path('getsubcategorylist/', views.getsubcategorylist, name='getsubcategorylist'),
+    path('deleteproduct/', views.deleteproduct, name='deleteproduct'),
+    path('getproductinfo/', views.getproductinfo, name='getproductinfo'),
+    path('updateproduct/', views.updateproduct, name='updateproduct')
 ]

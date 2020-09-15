@@ -18,7 +18,7 @@
         </el-row>
         <el-row>
             <el-col :span="24">
-                <el-table resizable="false" border :data="tableData">
+                <el-table :loading="loading" resizable="false" border :data="tableData">
                     <el-table-column width="59" label="№" type="index"></el-table-column>
                     <el-table-column
                             width="180"
@@ -131,6 +131,7 @@
         delimiters: ["[[", "]]"],
         el: '#app',
         data: {
+            loading: false,
             dialogVisible: false,
             editMode: false,
             categoryList: [],
@@ -146,21 +147,25 @@
             tableData: [],
         },
         created() {
-            axios.get('/getlist')
-                .then(response => {
-                    // handle success
-                    this.tableData = response.data;
-                    console.log(this.tableData);
-                })
-                .catch(function (error) {
-                    // handle error
-                    console.log(error);
-                })
-                .then(function () {
-                    // always executed
-                });
+            this.fetchData();
         },
         methods: {
+            async fetchData() {
+                this.loading = true;
+                axios.get('/getlist')
+                    .then(response => {
+                        // handle success
+                        this.tableData = response.data;
+                        console.log(this.tableData);
+                    })
+                    .catch(error => {
+                        // handle error
+                        console.log(error);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+            },
             handleDialogOpen() {
                 axios.get('/getcategorylist').then(response => {
                     console.log(response);
@@ -185,16 +190,48 @@
             handleEdit(id) {
                 this.editMode = true;
                 this.dialogVisible = true;
-                console.log("edit", id);
+                axios.post('getproductinfo/', {"id": id}, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(response => {
+                        this.formData = response.data;
+                        console.log(response.data);
+                        this.handleDialogOpen();
+                        this.handleCategoryChange()
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    }).finally(() => {
+
+                })
             },
             handleDelete(id) {
-                console.log("delete", id);
+                console.log('keldiiii', id);
+                axios.post('deleteproduct/', {"id": id}, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(response => {
+                        console.log(response)
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    }).finally(() => {
+
+                })
+                this.fetchData();
             },
             handleDialogCancel() {
                 this.dialogVisible = false;
             },
             handleDialogUpdate() {
+
+                axios.post('updateproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(function (response) {
+                        console.log(response);
+
+                        this.dialogVisible = false;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
                 this.dialogVisible = false;
+                this.fetchData();
             },
             handleDialogAdd() {
                 axios.post('addproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
@@ -205,6 +242,7 @@
                         console.log(error);
                     });
                 this.dialogVisible = false;
+                this.fetchData();
             },
             handleClickAdd() {
                 this.clearDialog();
@@ -224,10 +262,10 @@
             getCookie(c_name) {
                 if (document.cookie.length > 0) {
                     c_start = document.cookie.indexOf(c_name + "=");
-                    if (c_start != -1) {
+                    if (c_start !== -1) {
                         c_start = c_start + c_name.length + 1;
                         c_end = document.cookie.indexOf(";", c_start);
-                        if (c_end == -1) c_end = document.cookie.length;
+                        if (c_end === -1) c_end = document.cookie.length;
                         return unescape(document.cookie.substring(c_start, c_end));
                     }
                 }

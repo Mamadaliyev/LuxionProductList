@@ -25,7 +25,6 @@ class LazyEncoder(DjangoJSONEncoder):
 @csrf_exempt
 def addproduct(request):
     formdata = json.loads(request.body.decode('utf-8'))
-    print(formdata['categoryId'])
     prd = products(
         cat_name=category.objects.get(pk=formdata['categoryId']),
         subCat_id=subcategory.objects.get(pk=formdata['subCategoryId']),
@@ -83,3 +82,44 @@ def getsubcategorylist(request):
             })
 
     return JsonResponse(arrr, safe=False)
+
+
+@csrf_exempt
+def deleteproduct(request):
+    data = json.loads(request.body.decode('utf-8'))
+    prd = products.objects.get(pk=data['id'])
+    prd.delete()
+    return JsonResponse({"msg": 'deleted'}, safe=False)
+
+
+@csrf_exempt
+def getproductinfo(request):
+    data = json.loads(request.body.decode('utf-8'))
+    prd = products.objects.get(pk=data['id'])
+    result = {
+        "id": prd.pk,
+        "name": prd.official_name,
+        "type": prd.type_name,
+        "buyPrice": prd.buy_price,
+        "sellPrice": prd.sell_price,
+        "catTitle": prd.cat_name.cat_name,
+        "subCatTitle": prd.subCat_id.subCat_name,
+        "categoryId": prd.cat_name.pk,
+        "subCategoryId": prd.subCat_id.pk
+    }
+    return JsonResponse(result, safe=False)
+
+
+@csrf_exempt
+def updateproduct(request):
+    formdata = json.loads(request.body.decode('utf-8'))
+    prd = products.objects.get(pk=formdata['id'])
+    print(prd)
+    prd.cat_name = category.objects.get(pk=formdata['categoryId'])
+    prd.subCat_id = subcategory.objects.get(pk=formdata['subCategoryId'])
+    prd.official_name = formdata['name']
+    prd.type_name = formdata['type']
+    prd.buy_price = formdata['buyPrice']
+    prd.sell_price = formdata['sellPrice']
+    prd.save()
+    return JsonResponse({"msg": "Product updated"}, safe=False)

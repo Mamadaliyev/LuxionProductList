@@ -190,7 +190,18 @@
             handleEdit(id) {
                 this.editMode = true;
                 this.dialogVisible = true;
-                console.log("edit", id);
+                axios.post('getproductinfo/', {"id": id}, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(response => {
+                        this.formData = response.data;
+                        console.log(response.data);
+                        this.handleDialogOpen()
+                        this.handleCategoryChange()
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    }).finally(() => {
+
+                })
             },
             handleDelete(id) {
                 console.log('keldiiii', id);
@@ -209,7 +220,18 @@
                 this.dialogVisible = false;
             },
             handleDialogUpdate() {
+
+                axios.post('updateproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
+                    .then(function (response) {
+                        console.log(response);
+
+                        this.dialogVisible = false;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
                 this.dialogVisible = false;
+                this.fetchData();
             },
             handleDialogAdd() {
                 axios.post('addproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
@@ -240,10 +262,10 @@
             getCookie(c_name) {
                 if (document.cookie.length > 0) {
                     c_start = document.cookie.indexOf(c_name + "=");
-                    if (c_start != -1) {
+                    if (c_start !== -1) {
                         c_start = c_start + c_name.length + 1;
                         c_end = document.cookie.indexOf(";", c_start);
-                        if (c_end == -1) c_end = document.cookie.length;
+                        if (c_end === -1) c_end = document.cookie.length;
                         return unescape(document.cookie.substring(c_start, c_end));
                     }
                 }

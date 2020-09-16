@@ -160,12 +160,10 @@
                 this.loading = true;
                 axios.get('/getlist')
                     .then(response => {
-                        // handle success
                         this.tableData = response.data;
                         console.log(this.tableData);
                     })
                     .catch(error => {
-                        // handle error
                         console.log(error);
                     })
                     .finally(() => {

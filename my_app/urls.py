@@ -12,5 +12,6 @@ urlpatterns = [
     path('getsubcategorylist/', views.getsubcategorylist, name='getsubcategorylist'),
     path('deleteproduct/', views.deleteproduct, name='deleteproduct'),
     path('getproductinfo/', views.getproductinfo, name='getproductinfo'),
-    path('updateproduct/', views.updateproduct, name='updateproduct')
+    path('updateproduct/', views.updateproduct, name='updateproduct'),
+    path('export/xls/', views.export_all_products, name='export_all_products'),
 ]

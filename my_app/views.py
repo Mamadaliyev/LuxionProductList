@@ -6,7 +6,7 @@ from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from .models import category, subcategory, products
 import json
-
+import xlwt
 
 # Create your views here.
 
@@ -123,3 +123,47 @@ def updateproduct(request):
     prd.sell_price = formdata['sellPrice']
     prd.save()
     return JsonResponse({"msg": "Product updated"}, safe=False)
+
+@csrf_exempt
+def export_all_products(request):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="products.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Products')
+
+    row_num = 0
+    first_col = ws.col(1)
+    first_col.width = 320 * 20
+    second_col = ws.col(2)
+    second_col.width = 256 * 20
+    third_col = ws.col(3)
+    third_col.width = 220 * 20
+    fourth_col = ws.col(4)
+    fourth_col.width = 220 * 20
+    fifth_col = ws.col(5)
+    fifth_col.width = 220*20
+    sixth_col = ws.col(6)
+    sixth_col.width = 220*20
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['#', 'Категория', 'Подкатегория', 'Название', 'Тип', 'Цена покупки', 'Цена продажи']
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    font_style = xlwt.XFStyle()
+    rows = products.objects.all()
+    for row in rows:
+        row_num += 1
+        ws.write(row_num, 0, row_num, font_style)
+        ws.write(row_num, 1, row.cat_name.cat_name, font_style)
+        ws.write(row_num, 2, row.subCat_id.subCat_name, font_style)
+        ws.write(row_num, 3, row.official_name, font_style)
+        ws.write(row_num, 4, row.type_name, font_style)
+        ws.write(row_num, 5, row.buy_price, font_style)
+        ws.write(row_num, 6, row.sell_price, font_style)
+    wb.save(response)
+    return response
+

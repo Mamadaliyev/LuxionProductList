@@ -31,7 +31,8 @@ def addproduct(request):
         official_name=formdata['name'],
         type_name=formdata['type'],
         buy_price=formdata['buyPrice'],
-        sell_price=formdata['sellPrice']
+        sell_price=formdata['sellPrice'],
+        brand=formdata['brand']
     )
     prd.save()
     return JsonResponse([{"hello": "world"}], safe=False)
@@ -49,7 +50,8 @@ def getlist(request):
             "buyPrice": product.buy_price,
             "sellPrice": product.sell_price,
             "catTitle": product.cat_name.cat_name,
-            "subCatTitle": product.subCat_id.subCat_name
+            "subCatTitle": product.subCat_id.subCat_name,
+            "brand": product.brand
         }
         arr.append(result)
     return JsonResponse(arr, safe=False)
@@ -105,7 +107,8 @@ def getproductinfo(request):
         "catTitle": prd.cat_name.cat_name,
         "subCatTitle": prd.subCat_id.subCat_name,
         "categoryId": prd.cat_name.pk,
-        "subCategoryId": prd.subCat_id.pk
+        "subCategoryId": prd.subCat_id.pk,
+        "brand": prd.brand
     }
     return JsonResponse(result, safe=False)
 
@@ -121,6 +124,7 @@ def updateproduct(request):
     prd.type_name = formdata['type']
     prd.buy_price = formdata['buyPrice']
     prd.sell_price = formdata['sellPrice']
+    prd.brand = formdata['brand']
     prd.save()
     return JsonResponse({"msg": "Product updated"}, safe=False)
 

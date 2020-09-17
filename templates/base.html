@@ -37,6 +37,8 @@
                             label="Подкатегория"
                             prop="subCatTitle"
                     ></el-table-column>
+                    <el-table-column width="180" label="Бренд" prop="brand">
+                    </el-table-column>
                     <el-table-column width="180" label="Название" prop="name">
                     </el-table-column>
                     <el-table-column width="180" label="Тип" prop="type">
@@ -97,6 +99,9 @@
                             ></el-option>
                         </el-select>
                     </el-form-item>
+                    <el-form-item prop="brand" label="Бренд">
+                        <el-input required v-model="formData.brand"></el-input>
+                    </el-form-item>
                     <el-form-item prop="name" label="Название">
                         <el-input required v-model="formData.name"></el-input>
                     </el-form-item>
@@ -154,6 +159,7 @@
                 type: "",
                 buyPrice: "",
                 sellPrice: "",
+                brand: ""
             },
             tableData: [],
             rules: {
@@ -174,6 +180,9 @@
                 ],
                 sellPrice: [
                     {required: true, message: 'Пожалуйста, введите цену продажи', trigger: ['blur', 'change']}
+                ],
+                brand: [
+                    {required: true, message: 'Пожалуйста, введите бренд', trigger: ['blur', 'change']}
                 ]
             }
         },

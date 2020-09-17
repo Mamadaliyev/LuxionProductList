@@ -42,7 +42,6 @@ def getlist(request):
     product_objects = products.objects.all()
     arr = []
     for product in product_objects:
-        print(product.cat_name)
         result = {
             "id": product.pk,
             "name": product.official_name,
@@ -73,7 +72,6 @@ def getcategorylist(request):
 def getsubcategorylist(request):
     data = json.loads(request.body.decode('utf-8'))
     subcategory_objects = subcategory.objects.all()
-    print(subcategory_objects)
     arrr = []
     for subcat in subcategory_objects:
         if subcat.cat_id.pk == data['id']:
@@ -117,7 +115,6 @@ def getproductinfo(request):
 def updateproduct(request):
     formdata = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=formdata['id'])
-    print(prd)
     prd.cat_name = category.objects.get(pk=formdata['categoryId'])
     prd.subCat_id = subcategory.objects.get(pk=formdata['subCategoryId'])
     prd.official_name = formdata['name']

@@ -1,392 +1,564 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Product List</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-    <link rel="shortcut icon" href="https://i.imgur.com/Vmfy98I.png"/>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <link rel="shortcut icon" href="https://i.imgur.com/Vmfy98I.png" />
+  </head>
 
-</head>
-
-<body>
-<div id="app">
-    <div class="table">
+  <body>
+    <div id="app">
+      <div class="table">
         <el-row class="add-header">
-            <el-col :span="2">
-                <el-button @click="handleClickAdd" type="primary" icon="el-icon-plus">
-                    Добавить
-                </el-button>
-            </el-col>
-            <el-col :span="8" :offset="2">
-                <el-input placeholder="Поиск" @input="handleSearch" v-model="searchText"
-                          suffix-icon="el-icon-search"></el-input>
-            </el-col>
-            <el-col :span="2" :offset="8">
-                <a href="/export/xls/">
-                    <el-button type="info" icon="el-icon-download">
-                        Экспорт в Excel
-                    </el-button>
-                </a>
-            </el-col>
+          <el-col :span="2">
+            <el-button
+              @click="handleClickAdd"
+              type="primary"
+              icon="el-icon-plus"
+            >
+              Добавить
+            </el-button>
+          </el-col>
+          <el-col :span="8" :offset="2">
+            <el-input
+              placeholder="Поиск"
+              @input="handleSearch"
+              v-model="searchText"
+              suffix-icon="el-icon-search"
+            ></el-input>
+          </el-col>
+          <el-col :span="2" :offset="8">
+            <a href="/export/xls/">
+              <el-button type="info" icon="el-icon-download">
+                Экспорт в Excel
+              </el-button>
+            </a>
+          </el-col>
         </el-row>
         <el-row>
-            <el-col :span="24">
-                <el-table v-loading="loading" resizable="false" border :data="tableData">
-                    <el-table-column width="59" label="№" type="index"></el-table-column>
-                    <el-table-column
-                            width="180"
-                            label="Категория"
-                            prop="catTitle"
-                    ></el-table-column>
-                    <el-table-column
-                            width="180"
-                            label="Подкатегория"
-                            prop="subCatTitle"
-                    ></el-table-column>
-                    <el-table-column width="180" label="Бренд" prop="brand">
-                    </el-table-column>
-                    <el-table-column width="180" label="Название" prop="name">
-                    </el-table-column>
-                    <el-table-column width="180" label="Тип" prop="type">
-                    </el-table-column>
-                    <el-table-column width="150" label="Цена покупки" prop="buyPrice">
-                    </el-table-column>
-                    <el-table-column width="150" label="Цена продажи" prop="sellPrice">
-                    </el-table-column>
-                    <el-table-column width="240" align="right">
-                        <template slot-scope="scope">
-                            <el-button
-                                    type="warning"
-                                    @click="handleEdit(scope.row.id)"
-                                    icon="el-icon-edit"
-                            ></el-button>
-                            <el-button
-                                    type="danger"
-                                    @click="handleDelete(scope.row.id)"
-                                    icon="el-icon-delete"
-                            ></el-button>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </el-col>
+          <el-col :span="24">
+            <el-table
+              v-loading="loading"
+              resizable="false"
+              border
+              :data="tableData"
+            >
+              <el-table-column
+                width="59"
+                label="№"
+                :index="indexMethod"
+                type="index"
+              ></el-table-column>
+              <el-table-column
+                width="180"
+                label="Категория"
+                prop="catTitle"
+              ></el-table-column>
+              <el-table-column
+                width="180"
+                label="Подкатегория"
+                prop="subCatTitle"
+              ></el-table-column>
+              <el-table-column width="180" label="Бренд" prop="brand">
+              </el-table-column>
+              <el-table-column width="180" label="Название" prop="name">
+              </el-table-column>
+              <el-table-column width="180" label="Тип" prop="type">
+              </el-table-column>
+              <el-table-column width="150" label="Цена покупки" prop="buyPrice">
+              </el-table-column>
+              <el-table-column
+                width="150"
+                label="Цена продажи"
+                prop="sellPrice"
+              >
+              </el-table-column>
+              <el-table-column width="240" align="right">
+                <template slot-scope="scope">
+                  <el-button
+                    type="warning"
+                    @click="handleEdit(scope.row.id)"
+                    icon="el-icon-edit"
+                  ></el-button>
+                  <el-button
+                    type="danger"
+                    @click="handleDelete(scope.row.id)"
+                    icon="el-icon-delete"
+                  ></el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-pagination
+              :current-page="currentPage"
+              background
+              :page-size="Number(limit)"
+              layout="prev, pager, next"
+              :total="total"
+              @current-change="handleCurrentChange"
+            >
+            </el-pagination>
+          </el-col>
         </el-row>
 
         <el-dialog @open="handleDialogOpen" :visible.sync="dialogVisible">
-            <div class="edit-form">
-                <el-form v-loading.lock="formLoading" ref="mainForm" size="mini" label-width="120px" :model="formData"
-                         :rules="rules"
-                         action="/addItem" method="POST">
-
-                    {% csrf_token %}
-                    <el-form-item prop="categoryId" label="Категория">
-                        <el-select
-                                @change="handleCategoryChange()"
-                                class="select-type"
-                                v-model="formData.categoryId"
-                                placeholder=""
-                                no-data-text="Нет данных"
-                        >
-                            <el-option
-                                    v-for="cat in categoryList"
-                                    :key="cat.id"
-                                    :label="cat.name"
-                                    :value="cat.id"
-                            >
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item prop="subCategoryId" label="Подкатегория">
-                        <el-select no-data-text="Нет данных" v-model="formData.subCategoryId" placeholder="">
-                            <el-option
-                                    v-for="subCat in subCategoryList"
-                                    :key="subCat.id"
-                                    :label="subCat.name"
-                                    :value="subCat.id"
-                            ></el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item prop="brand" label="Бренд">
-                        <el-input required v-model="formData.brand"></el-input>
-                    </el-form-item>
-                    <el-form-item prop="name" label="Название">
-                        <el-input required v-model="formData.name"></el-input>
-                    </el-form-item>
-                    <el-form-item prop="type" label="Тип">
-                        <el-input required v-model="formData.type"></el-input>
-                    </el-form-item>
-                    <el-form-item prop="buyPrice" label="Цена покупки">
-                        <el-input
-                                required
-                                type="number"
-                                v-model="formData.buyPrice"
-                        ></el-input>
-                    </el-form-item>
-                    <el-form-item prop="sellPrice" label="Цена продажи">
-                        <el-input
-                                required
-                                type="number"
-                                v-model="formData.sellPrice"
-                        ></el-input>
-                    </el-form-item>
-                </el-form>
-                <div class="el-form-buttons">
-                    <el-button @click="handleDialogCancel">Отмена</el-button>
-                    <el-button v-if="editMode" @click="handleDialogUpdate" type="primary">
-                        Обновить
-                    </el-button>
-                    <el-button v-else @click="handleSubmit" type="primary">
-                        Добавить
-                    </el-button>
-                </div>
+          <div class="edit-form">
+            <el-form
+              v-loading.lock="formLoading"
+              ref="mainForm"
+              size="mini"
+              label-width="120px"
+              :model="formData"
+              :rules="rules"
+              action="/addItem"
+              method="POST"
+            >
+              {% csrf_token %}
+              <el-form-item prop="categoryId" label="Категория">
+                <el-select
+                  @change="handleCategoryChange()"
+                  class="select-type"
+                  v-model="formData.categoryId"
+                  placeholder=""
+                  no-data-text="Нет данных"
+                >
+                  <el-option
+                    v-for="cat in categoryList"
+                    :key="cat.id"
+                    :label="cat.name"
+                    :value="cat.id"
+                  >
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item prop="subCategoryId" label="Подкатегория">
+                <el-select
+                  no-data-text="Нет данных"
+                  v-model="formData.subCategoryId"
+                  placeholder=""
+                >
+                  <el-option
+                    v-for="subCat in subCategoryList"
+                    :key="subCat.id"
+                    :label="subCat.name"
+                    :value="subCat.id"
+                  ></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item prop="brand" label="Бренд">
+                <el-input required v-model="formData.brand"></el-input>
+              </el-form-item>
+              <el-form-item prop="name" label="Название">
+                <el-input required v-model="formData.name"></el-input>
+              </el-form-item>
+              <el-form-item prop="type" label="Тип">
+                <el-input required v-model="formData.type"></el-input>
+              </el-form-item>
+              <el-form-item prop="buyPrice" label="Цена покупки">
+                <el-input
+                  required
+                  type="number"
+                  v-model="formData.buyPrice"
+                ></el-input>
+              </el-form-item>
+              <el-form-item prop="sellPrice" label="Цена продажи">
+                <el-input
+                  required
+                  type="number"
+                  v-model="formData.sellPrice"
+                ></el-input>
+              </el-form-item>
+            </el-form>
+            <div class="el-form-buttons">
+              <el-button @click="handleDialogCancel">Отмена</el-button>
+              <el-button
+                v-if="editMode"
+                @click="handleDialogUpdate"
+                type="primary"
+              >
+                Обновить
+              </el-button>
+              <el-button v-else @click="handleSubmit" type="primary">
+                Добавить
+              </el-button>
             </div>
+          </div>
         </el-dialog>
+      </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="//unpkg.com/element-ui/lib/umd/locale/en.js"></script>
 
-<script>
-    let app = new Vue({
+    <script>
+      let app = new Vue({
         delimiters: ["[[", "]]"],
-        el: '#app',
+        el: "#app",
         data: {
-            loading: false,
-            formLoading: false,
-            dialogVisible: false,
-            editMode: false,
-            categoryList: [],
-            subCategoryList: [],
-            searchText: '',
-            formData: {
-                categoryId: '',
-                subCategoryId: '',
-                name: "",
-                type: "",
-                buyPrice: "",
-                sellPrice: "",
-                brand: ""
-            },
-            tableData: [],
-            tempTableData: [],
-            rules: {
-                categoryId: [
-                    {required: true, message: 'Пожалуйста, выберите категорию', trigger: 'change'}
-                ],
-                subCategoryId: [
-                    {required: true, message: 'Пожалуйста, выберите подкатегорию', trigger: 'change'}
-                ],
-                name: [
-                    {required: true, message: 'Пожалуйста, введите имя', trigger: ['blur', 'change']}
-                ],
-                type: [
-                    {required: true, message: 'Пожалуйста, введите тип', trigger: ['blur', 'change']}
-                ],
-                buyPrice: [
-                    {required: true, message: 'Пожалуйста, введите цену покупки', trigger: ['blur', 'change']}
-                ],
-                sellPrice: [
-                    {required: true, message: 'Пожалуйста, введите цену продажи', trigger: ['blur', 'change']}
-                ],
-                brand: [
-                    {required: true, message: 'Пожалуйста, введите бренд', trigger: ['blur', 'change']}
-                ]
-            }
+          limit: 10,
+          total: 0,
+          offset: 0,
+          loading: false,
+          formLoading: false,
+          dialogVisible: false,
+          editMode: false,
+          categoryList: [],
+          subCategoryList: [],
+          searchText: "",
+          formData: {
+            categoryId: "",
+            subCategoryId: "",
+            name: "",
+            type: "",
+            buyPrice: "",
+            sellPrice: "",
+            brand: "",
+          },
+          tableData: [],
+          tempTableData: [],
+          rules: {
+            categoryId: [
+              {
+                required: true,
+                message: "Пожалуйста, выберите категорию",
+                trigger: "change",
+              },
+            ],
+            subCategoryId: [
+              {
+                required: true,
+                message: "Пожалуйста, выберите подкатегорию",
+                trigger: "change",
+              },
+            ],
+            name: [
+              {
+                required: true,
+                message: "Пожалуйста, введите имя",
+                trigger: ["blur", "change"],
+              },
+            ],
+            type: [
+              {
+                required: true,
+                message: "Пожалуйста, введите тип",
+                trigger: ["blur", "change"],
+              },
+            ],
+            buyPrice: [
+              {
+                required: true,
+                message: "Пожалуйста, введите цену покупки",
+                trigger: ["blur", "change"],
+              },
+            ],
+            sellPrice: [
+              {
+                required: true,
+                message: "Пожалуйста, введите цену продажи",
+                trigger: ["blur", "change"],
+              },
+            ],
+            brand: [
+              {
+                required: true,
+                message: "Пожалуйста, введите бренд",
+                trigger: ["blur", "change"],
+              },
+            ],
+          },
+        },
+        computed: {
+          currentPage() {
+            return Math.floor(this.offset / this.limit) + 1;
+          },
         },
         created() {
-            this.fetchData();
+          ELEMENT.locale(ELEMENT.lang.en);
+          this.setQueryParamsFromRoute();
+          const offset = this.getQueryVariable('offset');
+          const limit = this.getQueryVariable('limit');
+          if(offset > 0 && limit > 0) {
+            this.offset = offset;
+            this.limit = limit;
+          }
+          console.log(offset, limit);
+          this.fetchData();
         },
         methods: {
-            async fetchData() {
-                this.loading = true;
-                axios.get('/getlist')
-                    .then(response => {
-                        this.tableData = response.data;
-                        this.tempTableData = response.data;
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    })
-                    .finally(() => {
-                        this.loading = false
-                    });
-            },
-            async handleDialogOpen() {
-                await this.getCategoryList();
-                this.subCategoryList = [];
-                this.$refs['mainForm'].resetFields();
-            },
-            async handleCategoryChange() {
-                await this.getSubCategoryList();
-                this.formData.subCategoryId = ''
-            },
-            handleEdit(id) {
-                this.editMode = true;
-                this.dialogVisible = true;
-                this.formLoading = true;
-                axios.post('getproductinfo/', {"id": id}, {"X-CSRFToken": this.getCookie("csrftoken")})
-                    .then(response => {
-                        this.formData = response.data;
-                        this.getCategoryList();
-                        this.getSubCategoryList()
-                    })
-                    .catch(err => {
-                        console.log(err);
-                    }).finally(() => {
-                    this.formLoading = false;
-                })
-            },
-            handleDelete(id) {
-                this.$confirm('Это приведет к безвозвратному удалению файла. Продолжать?', 'Предупреждение', {
-                    confirmButtonText: 'Ok',
-                    cancelButtonText: 'Отмена',
-                    type: 'warning'
-                }).then(() => {
-                    axios.post('deleteproduct/', {"id": id}, {"X-CSRFToken": this.getCookie("csrftoken")})
-                        .then(response => {
-                            this.$message({
-                                message: 'Продукт удален.',
-                                type: 'success'
-                            });
-                        })
-                        .catch(err => {
-                            console.log(err)
-                        }).finally(() => {
-
-                    });
-                    this.fetchData();
-                }).catch(() => {
+          async handleCurrentChange(page) {
+            try {
+              this.loading = true;
+              this.offset = this.limit * (page - 1);
+              await this.fetchData();
+            } finally {
+              this.loading = false;
+            }
+          },
+          async fetchData() {
+            this.loading = true;
+            axios
+              .get(`/getlist?offset=${this.offset}&limit=${this.limit}`)
+              .then((response) => {
+                this.tableData = response.data.items;
+                this.tempTableData = response.data.items;
+                this.total = response.data.total;
+                if (window.history.replaceState) {
+                  //prevents browser from storing history with each change:
+                  window.history.replaceState('', '', `?offset=${this.offset}&limit=${this.limit}`);
+              }
+              })
+              .catch((error) => {
+                console.log(error);
+              })
+              .finally(() => {
+                this.loading = false;
+              });
+          },
+          async handleDialogOpen() {
+            await this.getCategoryList();
+            this.subCategoryList = [];
+            this.$refs["mainForm"].resetFields();
+          },
+          async handleCategoryChange() {
+            await this.getSubCategoryList();
+            this.formData.subCategoryId = "";
+          },
+          handleEdit(id) {
+            this.editMode = true;
+            this.dialogVisible = true;
+            this.formLoading = true;
+            axios
+              .post(
+                "getproductinfo/",
+                { id: id },
+                { "X-CSRFToken": this.getCookie("csrftoken") }
+              )
+              .then((response) => {
+                this.formData = response.data;
+                this.getCategoryList();
+                this.getSubCategoryList();
+              })
+              .catch((err) => {
+                console.log(err);
+              })
+              .finally(() => {
+                this.formLoading = false;
+              });
+          },
+          handleDelete(id) {
+            this.$confirm(
+              "Это приведет к безвозвратному удалению файла. Продолжать?",
+              "Предупреждение",
+              {
+                confirmButtonText: "Ok",
+                cancelButtonText: "Отмена",
+                type: "warning",
+              }
+            )
+              .then(() => {
+                axios
+                  .post(
+                    "deleteproduct/",
+                    { id: id },
+                    { "X-CSRFToken": this.getCookie("csrftoken") }
+                  )
+                  .then((response) => {
                     this.$message({
-                        type: 'info',
-                        message: 'Удаление отменено'
+                      message: "Продукт удален.",
+                      type: "success",
                     });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  })
+                  .finally(() => {});
+                this.fetchData();
+              })
+              .catch(() => {
+                this.$message({
+                  type: "info",
+                  message: "Удаление отменено",
                 });
-
-            },
-            handleDialogCancel() {
+              });
+          },
+          handleDialogCancel() {
+            this.dialogVisible = false;
+          },
+          handleDialogUpdate() {
+            axios
+              .post("updateproduct/", this.formData, {
+                "X-CSRFToken": this.getCookie("csrftoken"),
+              })
+              .then((response) => {
                 this.dialogVisible = false;
-            },
-            handleDialogUpdate() {
-                axios.post('updateproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
-                    .then(response => {
-                        this.dialogVisible = false;
-                        this.$message({
-                            message: 'Продукт обновлен.',
-                            type: 'success'
-                        });
-                    })
-                    .catch(function (error) {
-                        console.log(error);
+                this.$message({
+                  message: "Продукт обновлен.",
+                  type: "success",
+                });
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+            this.dialogVisible = false;
+            this.fetchData();
+          },
+          handleSubmit() {
+            this.$refs["mainForm"].validate((valid) => {
+              if (valid) {
+                axios
+                  .post("addproduct/", this.formData, {
+                    "X-CSRFToken": this.getCookie("csrftoken"),
+                  })
+                  .then((response) => {
+                    this.$message({
+                      message: "Продукт добавлен.",
+                      type: "success",
                     });
+                  })
+                  .catch(function (error) {
+                    console.log(error);
+                  });
                 this.dialogVisible = false;
                 this.fetchData();
-            },
-            handleSubmit() {
-                this.$refs['mainForm'].validate((valid) => {
-                    if (valid) {
-                        axios.post('addproduct/', this.formData, {"X-CSRFToken": this.getCookie("csrftoken")})
-                            .then(response => {
-                                this.$message({
-                                    message: 'Продукт добавлен.',
-                                    type: 'success'
-                                });
-                            })
-                            .catch(function (error) {
-                                console.log(error);
-                            });
-                        this.dialogVisible = false;
-                        this.fetchData();
-                    } else {
-                        console.log('error submit!!');
-                        return false;
-                    }
-                });
-
-            },
-            handleClickAdd() {
-                this.dialogVisible = true;
-                this.editMode = false;
-            },
-            clearForm() {
-                this.$refs['mainForm'].resetFields();
-            },
-            getCookie(c_name) {
-                if (document.cookie.length > 0) {
-                    c_start = document.cookie.indexOf(c_name + "=");
-                    if (c_start !== -1) {
-                        c_start = c_start + c_name.length + 1;
-                        c_end = document.cookie.indexOf(";", c_start);
-                        if (c_end === -1) c_end = document.cookie.length;
-                        return unescape(document.cookie.substring(c_start, c_end));
-                    }
-                }
-                return "";
-            },
-            getCategoryList() {
-                axios.get('/getcategorylist').then(response => {
-                    this.categoryList = response.data
-                }).catch(err => {
-                    console.log(err)
-                })
-            },
-            getSubCategoryList() {
-                axios.post('getsubcategorylist/', {
-                    "id": this.formData.categoryId
-                }, {"X-CSRFToken": this.getCookie("csrftoken")})
-                    .then(response => {
-                        this.subCategoryList = response.data;
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    }).finally(() => {
-                })
-            },
-            isSame(prd) {
-                let catTitle = prd.catTitle.toLowerCase();
-                let subCatTitle = prd.subCatTitle.toLowerCase();
-                let brand = prd.brand.toLowerCase();
-                let name = prd.name.toLowerCase();
-                let type = prd.type.toLowerCase();
-                let buyPrice = prd.buyPrice.toLowerCase();
-                let sellPrice = prd.sellPrice.toLowerCase();
-                let text = this.searchText.toLowerCase();
-
-                return catTitle.includes(text) || subCatTitle.includes(text) || brand.includes(text) ||
-                    name.includes(text) || type.includes(text) || buyPrice.includes(text) || sellPrice.includes(text);
-            },
-            handleSearch() {
-                this.tableData = this.tempTableData.filter(prd => {
-                    return this.isSame(prd);
-                })
+              } else {
+                console.log("error submit!!");
+                return false;
+              }
+            });
+          },
+          handleClickAdd() {
+            this.dialogVisible = true;
+            this.editMode = false;
+          },
+          clearForm() {
+            this.$refs["mainForm"].resetFields();
+          },
+          getCookie(c_name) {
+            if (document.cookie.length > 0) {
+              c_start = document.cookie.indexOf(c_name + "=");
+              if (c_start !== -1) {
+                c_start = c_start + c_name.length + 1;
+                c_end = document.cookie.indexOf(";", c_start);
+                if (c_end === -1) c_end = document.cookie.length;
+                return unescape(document.cookie.substring(c_start, c_end));
+              }
             }
-        },
-    })
-</script>
+            return "";
+          },
+          getCategoryList() {
+            axios
+              .get("/getcategorylist")
+              .then((response) => {
+                this.categoryList = response.data;
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          },
+          getSubCategoryList() {
+            axios
+              .post(
+                "getsubcategorylist/",
+                {
+                  id: this.formData.categoryId,
+                },
+                { "X-CSRFToken": this.getCookie("csrftoken") }
+              )
+              .then((response) => {
+                this.subCategoryList = response.data;
+              })
+              .catch(function (error) {
+                console.log(error);
+              })
+              .finally(() => {});
+          },
+          isSame(prd) {
+            let catTitle = prd.catTitle.toLowerCase();
+            let subCatTitle = prd.subCatTitle.toLowerCase();
+            let brand = prd.brand.toLowerCase();
+            let name = prd.name.toLowerCase();
+            let type = prd.type.toLowerCase();
+            let buyPrice = prd.buyPrice.toLowerCase();
+            let sellPrice = prd.sellPrice.toLowerCase();
+            let text = this.searchText.toLowerCase();
 
-</body>
-<style>
+            return (
+              catTitle.includes(text) ||
+              subCatTitle.includes(text) ||
+              brand.includes(text) ||
+              name.includes(text) ||
+              type.includes(text) ||
+              buyPrice.includes(text) ||
+              sellPrice.includes(text)
+            );
+          },
+          handleSearch() {
+            this.tableData = this.tempTableData.filter((prd) => {
+              return this.isSame(prd);
+            });
+          },
+          setQueryParamsFromRoute() {
+              console.log(window.location.href);
+
+            {% comment %} const query = this.$route.query;
+            if (query.offset) {
+              this.offset = query.offset;
+            }
+            if (query.limit) {
+              this.limit = query.limit;
+            } {% endcomment %}
+          },
+          getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split('=');
+                if (decodeURIComponent(pair[0]) == variable) {
+                    return decodeURIComponent(pair[1]);
+                }
+            }
+            console.log('Query variable %s not found', variable);
+        },
+          indexMethod(index) {
+            return (this.currentPage - 1) * this.limit + index + 1;
+          },
+        },
+      });
+    </script>
+  </body>
+  <style>
     #app {
-        font-family: Avenir, Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        color: #2c3e50;
-        margin: 20px 100px;
-        height: 100%;
+      font-family: Avenir, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: #2c3e50;
+      margin: 20px 100px;
+      height: 100%;
     }
 
     .table {
-        margin-top: 50px;
+      margin-top: 50px;
     }
 
     .table .add-header {
-        margin-bottom: 20px;
+      margin-bottom: 20px;
     }
 
     .edit-form .el-form-buttons {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
-        margin-top: 50px;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      margin-top: 50px;
     }
-</style>
+
+    .el-pagination {
+      text-align: center !important;
+      margin-top: 10px;
+    }
+  </style>
 </html>

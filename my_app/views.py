@@ -39,7 +39,13 @@ def addproduct(request):
 
 
 def getlist(request):
-    product_objects = products.objects.all()
+    offset = int(request.GET.get('offset'))
+    limit = int(request.GET.get('limit'))
+    # print(type(limit), limit, offset)
+    # print('getga keldi', request.GET.get('limit'))
+    # print('getga keldi', request.GET.get('offset'))
+    total = products.objects.all().count()
+    product_objects = products.objects.all()[offset:offset + limit]
     arr = []
     for product in product_objects:
         result = {
@@ -53,7 +59,13 @@ def getlist(request):
             "brand": product.brand
         }
         arr.append(result)
-    return JsonResponse(arr, safe=False)
+    data = {
+        "items": arr,
+        "total": total,
+        "limit": limit,
+        "offset": offset
+    }
+    return JsonResponse(data, safe=False)
 
 
 def getcategorylist(request):
@@ -68,7 +80,7 @@ def getcategorylist(request):
     return JsonResponse(arr, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def getsubcategorylist(request):
     data = json.loads(request.body.decode('utf-8'))
     subcategory_objects = subcategory.objects.all()
@@ -84,7 +96,7 @@ def getsubcategorylist(request):
     return JsonResponse(arrr, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def deleteproduct(request):
     data = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=data['id'])
@@ -92,7 +104,7 @@ def deleteproduct(request):
     return JsonResponse({"msg": 'deleted'}, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def getproductinfo(request):
     data = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=data['id'])
@@ -111,7 +123,7 @@ def getproductinfo(request):
     return JsonResponse(result, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def updateproduct(request):
     formdata = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=formdata['id'])
@@ -125,7 +137,8 @@ def updateproduct(request):
     prd.save()
     return JsonResponse({"msg": "Product updated"}, safe=False)
 
-@csrf_exempt
+
+@ csrf_exempt
 def export_all_products(request):
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="products.xls"'
@@ -151,7 +164,8 @@ def export_all_products(request):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['#', 'Категория', 'Подкатегория', 'Бренд', 'Название', 'Тип', 'Цена покупки', 'Цена продажи']
+    columns = ['#', 'Категория', 'Подкатегория', 'Бренд',
+               'Название', 'Тип', 'Цена покупки', 'Цена продажи']
 
     for col_num in range(len(columns)):
         ws.write(row_num, col_num, columns[col_num], font_style)
@@ -170,4 +184,3 @@ def export_all_products(request):
         ws.write(row_num, 7, row.sell_price, font_style)
     wb.save(response)
     return response
-

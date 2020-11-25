@@ -279,10 +279,9 @@
         },
         created() {
           ELEMENT.locale(ELEMENT.lang.en);
-          this.setQueryParamsFromRoute();
-          const offset = this.getQueryVariable('offset');
-          const limit = this.getQueryVariable('limit');
-          if(offset > 0 && limit > 0) {
+          const offset = this.getQueryVariable("offset");
+          const limit = this.getQueryVariable("limit");
+          if (offset > 0 && limit > 0) {
             this.offset = offset;
             this.limit = limit;
           }
@@ -292,11 +291,10 @@
         methods: {
           async handleCurrentChange(page) {
             try {
-              this.loading = true;
               this.offset = this.limit * (page - 1);
               await this.fetchData();
-            } finally {
-              this.loading = false;
+            } catch (e) {
+              console.log(e);
             }
           },
           async fetchData() {
@@ -309,8 +307,12 @@
                 this.total = response.data.total;
                 if (window.history.replaceState) {
                   //prevents browser from storing history with each change:
-                  window.history.replaceState('', '', `?offset=${this.offset}&limit=${this.limit}`);
-              }
+                  window.history.replaceState(
+                    "",
+                    "",
+                    `?offset=${this.offset}&limit=${this.limit}`
+                  );
+                }
               })
               .catch((error) => {
                 console.log(error);
@@ -502,28 +504,17 @@
               return this.isSame(prd);
             });
           },
-          setQueryParamsFromRoute() {
-              console.log(window.location.href);
-
-            {% comment %} const query = this.$route.query;
-            if (query.offset) {
-              this.offset = query.offset;
-            }
-            if (query.limit) {
-              this.limit = query.limit;
-            } {% endcomment %}
-          },
           getQueryVariable(variable) {
             var query = window.location.search.substring(1);
-            var vars = query.split('&');
+            var vars = query.split("&");
             for (var i = 0; i < vars.length; i++) {
-                var pair = vars[i].split('=');
-                if (decodeURIComponent(pair[0]) == variable) {
-                    return decodeURIComponent(pair[1]);
-                }
+              var pair = vars[i].split("=");
+              if (decodeURIComponent(pair[0]) == variable) {
+                return decodeURIComponent(pair[1]);
+              }
             }
-            console.log('Query variable %s not found', variable);
-        },
+            console.log("Query variable %s not found", variable);
+          },
           indexMethod(index) {
             return (this.currentPage - 1) * this.limit + index + 1;
           },

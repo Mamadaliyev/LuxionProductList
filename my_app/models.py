@@ -26,6 +26,7 @@ class products(models.Model):
     cat_name = models.ForeignKey(category, on_delete=models.CASCADE)
     subCat_id = models.ForeignKey(subcategory, on_delete=models.CASCADE)
     official_name = models.CharField(max_length=200)
+    brand = models.CharField(max_length=200)
     type_name = models.CharField(max_length=200)
     buy_price = models.DecimalField(decimal_places=0, max_digits=12)
     sell_price = models.DecimalField(decimal_places=0, max_digits=12)

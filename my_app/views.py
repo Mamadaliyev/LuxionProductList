@@ -6,7 +6,7 @@ from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from .models import category, subcategory, products
 import json
-
+import xlwt
 
 # Create your views here.
 
@@ -31,17 +31,23 @@ def addproduct(request):
         official_name=formdata['name'],
         type_name=formdata['type'],
         buy_price=formdata['buyPrice'],
-        sell_price=formdata['sellPrice']
+        sell_price=formdata['sellPrice'],
+        brand=formdata['brand']
     )
     prd.save()
     return JsonResponse([{"hello": "world"}], safe=False)
 
 
 def getlist(request):
-    product_objects = products.objects.all()
+    offset = int(request.GET.get('offset'))
+    limit = int(request.GET.get('limit'))
+    # print(type(limit), limit, offset)
+    # print('getga keldi', request.GET.get('limit'))
+    # print('getga keldi', request.GET.get('offset'))
+    total = products.objects.all().count()
+    product_objects = products.objects.all()[offset:offset + limit]
     arr = []
     for product in product_objects:
-        print(product.cat_name)
         result = {
             "id": product.pk,
             "name": product.official_name,
@@ -49,10 +55,17 @@ def getlist(request):
             "buyPrice": product.buy_price,
             "sellPrice": product.sell_price,
             "catTitle": product.cat_name.cat_name,
-            "subCatTitle": product.subCat_id.subCat_name
+            "subCatTitle": product.subCat_id.subCat_name,
+            "brand": product.brand
         }
         arr.append(result)
-    return JsonResponse(arr, safe=False)
+    data = {
+        "items": arr,
+        "total": total,
+        "limit": limit,
+        "offset": offset
+    }
+    return JsonResponse(data, safe=False)
 
 
 def getcategorylist(request):
@@ -67,11 +80,10 @@ def getcategorylist(request):
     return JsonResponse(arr, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def getsubcategorylist(request):
     data = json.loads(request.body.decode('utf-8'))
     subcategory_objects = subcategory.objects.all()
-    print(subcategory_objects)
     arrr = []
     for subcat in subcategory_objects:
         if subcat.cat_id.pk == data['id']:
@@ -84,7 +96,7 @@ def getsubcategorylist(request):
     return JsonResponse(arrr, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def deleteproduct(request):
     data = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=data['id'])
@@ -92,7 +104,7 @@ def deleteproduct(request):
     return JsonResponse({"msg": 'deleted'}, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def getproductinfo(request):
     data = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=data['id'])
@@ -105,21 +117,70 @@ def getproductinfo(request):
         "catTitle": prd.cat_name.cat_name,
         "subCatTitle": prd.subCat_id.subCat_name,
         "categoryId": prd.cat_name.pk,
-        "subCategoryId": prd.subCat_id.pk
+        "subCategoryId": prd.subCat_id.pk,
+        "brand": prd.brand
     }
     return JsonResponse(result, safe=False)
 
 
-@csrf_exempt
+@ csrf_exempt
 def updateproduct(request):
     formdata = json.loads(request.body.decode('utf-8'))
     prd = products.objects.get(pk=formdata['id'])
-    print(prd)
     prd.cat_name = category.objects.get(pk=formdata['categoryId'])
     prd.subCat_id = subcategory.objects.get(pk=formdata['subCategoryId'])
     prd.official_name = formdata['name']
     prd.type_name = formdata['type']
     prd.buy_price = formdata['buyPrice']
     prd.sell_price = formdata['sellPrice']
+    prd.brand = formdata['brand']
     prd.save()
     return JsonResponse({"msg": "Product updated"}, safe=False)
+
+
+@ csrf_exempt
+def export_all_products(request):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="products.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Products')
+
+    row_num = 0
+    first_col = ws.col(1)
+    first_col.width = 350 * 20
+    second_col = ws.col(2)
+    second_col.width = 300 * 20
+    seventh_col = ws.col(3)
+    seventh_col.width = 220*20
+    third_col = ws.col(4)
+    third_col.width = 220 * 20
+    fourth_col = ws.col(5)
+    fourth_col.width = 220 * 20
+    fifth_col = ws.col(6)
+    fifth_col.width = 220*20
+    sixth_col = ws.col(7)
+    sixth_col.width = 220*20
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['#', 'Категория', 'Подкатегория', 'Бренд',
+               'Название', 'Тип', 'Цена покупки', 'Цена продажи']
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    font_style = xlwt.XFStyle()
+    rows = products.objects.all()
+    for row in rows:
+        row_num += 1
+        ws.write(row_num, 0, row_num, font_style)
+        ws.write(row_num, 1, row.cat_name.cat_name, font_style)
+        ws.write(row_num, 2, row.subCat_id.subCat_name, font_style)
+        ws.write(row_num, 3, row.brand, font_style)
+        ws.write(row_num, 4, row.official_name, font_style)
+        ws.write(row_num, 5, row.type_name, font_style)
+        ws.write(row_num, 6, row.buy_price, font_style)
+        ws.write(row_num, 7, row.sell_price, font_style)
+    wb.save(response)
+    return response
